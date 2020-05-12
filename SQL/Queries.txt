@@ -1,0 +1,59 @@
+/*Query 1 - Query used for first insight/*
+
+WITH t1 AS (SELECT i.film_id, COUNT(*) AS rental_count FROM inventory i
+JOIN rental r
+ON r.inventory_id = i.inventory_id
+GROUP BY 1
+ORDER BY 1)
+
+SELECT f.title AS film_title, c.name AS category_name, t1.rental_count FROM film f
+JOIN film_category fc
+ON fc.film_id = f.film_id
+JOIN category c
+ON c.category_id = fc.category_id
+JOIN t1
+ON f.film_id = t1.film_id
+WHERE f.film_id = t1.film_id AND c.name IN ('Animation', 'Children', 'Classics', 'Comedy', 'Family', 'Music')
+ORDER BY 2,1;
+
+/*Query 2 - Query used for Second insight/*
+
+SELECT f.title, c.name, f.rental_duration,
+NTILE(4) OVER (ORDER BY f.rental_duration) AS standard_quartile FROM film f
+JOIN film_category fc
+ON fc.film_id = f.film_id
+JOIN category c
+ON fc.category_id = c.category_id
+WHERE c.name IN ('Animation', 'Children', 'Classics', 'Comedy', 'Family', 'Music’);
+
+/*Query 3 - Query used for Third insight/*
+
+WITH t1 AS (SELECT f.title, c.name, f.rental_duration, 
+NTILE(4) OVER (ORDER BY f.rental_duration) AS standard_quartile 
+FROM film f
+JOIN film_category fc
+ON fc.film_id = f.film_id
+JOIN category c
+ON fc.category_id = c.category_id
+WHERE c.name IN ('Animation', 'Children', 'Classics', 'Comedy', 'Family', 'Music'))
+
+SELECT t1.name, t1.standard_quartile, count(*) FROM t1
+GROUP BY 1,2
+ORDER BY 1,2;
+
+/*Query 4 - Query used for Fourth insight/*
+
+WITH t1 AS (SELECT c.customer_id as id, c.first_name ||' ' || c.last_name AS fullname, SUM(p.amount) AS pay_amount FROM customer c
+JOIN payment p
+ON p.customer_id = c.customer_id
+GROUP BY 1,2
+ORDER BY 3 DESC
+LIMIT 10)
+
+SELECT DATE_TRUNC('month', p.payment_date), t1.fullname, COUNT(p.amount), SUM(p.amount)
+FROM payment p
+JOIN t1
+ON p.customer_id = id
+WHERE (p.payment_date BETWEEN '2007-01-01' AND '2008-01-01')
+GROUP BY 1,2
+order by 2;
